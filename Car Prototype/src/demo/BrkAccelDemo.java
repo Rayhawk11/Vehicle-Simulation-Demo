@@ -29,35 +29,38 @@ import javax.swing.JMenuItem;
 import javax.swing.JCheckBoxMenuItem;
 
 public class BrkAccelDemo extends JFrame {
-	private int tick = 5;
-	private JPanel contentPane;
-	private JTextField textField;
-	private JProgressBar progressBar;
-	private boolean running = false;
-	private Timer timer;
-	private JButton btnReset;
-	private double accel = 0;
-	private double time = 0;
-	private double initvel = 0;
-	private double lastpos = 0;
-	private double maxvel = 100;
-	private JTextField textField_1;
-	private JLabel lblAccelms;
-	private JLabel lblMaxVelms;
-	private JTextField textField_2;
-	private JLabel lblInitVelms;
-	private JMenuBar menuBar;
-	private JMenu mnDebug;
-	private JMenuItem mntmSetTickRate;
-	private JCheckBoxMenuItem chckbxmntmStopSimulationAt;
-	private JMenu mnHelp;
-	private JMenuItem mntmDisplayHelpDialog;
-	private JLabel lblCurrentVel;
-	private JTextField textField_3;
-	private double vel;
-	private boolean max = false;
-	private JLabel lblTime;
-	private JTextField textField_4;
+	private int tick = 5; // Milliseconds between each simulation update
+	private JPanel contentPane; // GUI Panel
+	private JTextField textField; // Acceleration input
+	private JProgressBar progressBar; // Progress bar of position
+	private boolean running = false; // Used to determine whether start/stop
+										// should reset or start a new
+										// simulation
+	private Timer timer; // The timer which dictates simulation speed
+	private JButton btnReset; // Reset button
+	private double accel = 0; // Value of acceleration (m/s^2)
+	private double time = 0; // Value of time (ms)
+	private double initvel = 0; // Initial velocity (m/s)
+	private double lastpos = 0; // Position during last tick (m)
+	private double maxvel = 100; // Max velocity (m/s)
+	private JTextField textField_1; // Max velocity entry
+	private JLabel lblAccelms; // Text on the GUI
+	private JLabel lblMaxVelms; // Text on the GUI
+	private JTextField textField_2; // Initial velocity field
+	private JLabel lblInitVelms; // Text on the GUI
+	private JMenuBar menuBar; // Menu bar
+	private JMenu mnDebug; // Debug menu
+	private JMenuItem mntmSetTickRate; // Option to set tick rate
+	private JCheckBoxMenuItem chckbxmntmStopSimulationAt; // Option to disable
+															// autostop
+	private JMenu mnHelp; // Help menu
+	private JMenuItem mntmDisplayHelpDialog; // Opens the help dialog
+	private JLabel lblCurrentVel; // Text on the GUI
+	private JTextField textField_3; // Displays current velocity
+	private double vel; // Value of current velocity
+	private boolean max = false; // Whether or not the vehicle is at max speed
+	private JLabel lblTime; // Text on the GUI
+	private JTextField textField_4; // Displays current simulation time
 
 	/**
 	 * Launch the application.
@@ -102,7 +105,9 @@ public class BrkAccelDemo extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				String s = (String) JOptionPane.showInputDialog(null, "Set tick rate", "Tick Rate",
 						JOptionPane.PLAIN_MESSAGE, null, null, tick);
-				tick = (int) Math.round(Double.parseDouble(s));
+				tick = (int) Math.round(Double.parseDouble(s)); // Parse user
+																// input and set
+																// as tick rate
 			}
 		});
 		mnDebug.add(mntmSetTickRate);
@@ -119,7 +124,9 @@ public class BrkAccelDemo extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				JOptionPane.showMessageDialog(null,
 						"Input values into text boxes and then hit start.  Pressing stop while the simulation is running causes it to pause.\nUse the debug menu to set tick rate (ms between each calculation) and set if the simulation will stop at V=0.\nFailure to enter values results in a silent error.");
+				// Help dialog
 			}
+
 		});
 		mnHelp.add(mntmDisplayHelpDialog);
 		contentPane = new JPanel();
@@ -190,12 +197,12 @@ public class BrkAccelDemo extends JFrame {
 		btnReset.setHorizontalAlignment(SwingConstants.RIGHT);
 		btnReset.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				timer.stop();
-				progressBar.setValue(0);
+				timer.stop(); // Stop the simulation
+				progressBar.setValue(0); // Reset progress bar
 				progressBar.setString("0m");
-				time = 0;
-				lastpos = 0;
-				max=false;
+				time = 0; // Set time to 0
+				lastpos = 0; // Reset last position to 0
+				max = false; // Reset max speed indicator
 			}
 		});
 
@@ -208,19 +215,21 @@ public class BrkAccelDemo extends JFrame {
 					System.out.println("Stopping");
 					timer.stop();
 					running = false;
+					// Stop/pause the simulation without resetting it
 					return;
+				} else {
+					running = true;
+					String s = textField_1.getText();
+					if (s.equalsIgnoreCase(""))
+						maxvel = Double.MAX_VALUE;
+					else
+						maxvel = Double.parseDouble(textField_1.getText());
+					accel = Double.parseDouble(textField.getText());
+					initvel = Double.parseDouble(textField_2.getText());
+					timer = new Timer(tick, new MyTimerActionListener());
+					timer.start();
+					// Parse values and begin simulation if it is not running
 				}
-				running = true;
-				String s = textField_1.getText();
-				if (s.equalsIgnoreCase(""))
-					maxvel = Double.MAX_VALUE;
-				else
-					maxvel = Double.parseDouble(textField_1.getText());
-				accel = Double.parseDouble(textField.getText());
-				initvel = Double.parseDouble(textField_2.getText());
-				timer = new Timer(tick, new MyTimerActionListener());
-				timer.start();
-
 			}
 		});
 		GridBagConstraints gbc_btnStartstop = new GridBagConstraints();
@@ -265,7 +274,7 @@ public class BrkAccelDemo extends JFrame {
 		gbc_textField_3.gridy = 5;
 		contentPane.add(textField_3, gbc_textField_3);
 		textField_3.setColumns(10);
-		
+
 		lblTime = new JLabel("Time");
 		GridBagConstraints gbc_lblTime = new GridBagConstraints();
 		gbc_lblTime.anchor = GridBagConstraints.EAST;
@@ -273,7 +282,7 @@ public class BrkAccelDemo extends JFrame {
 		gbc_lblTime.gridx = 0;
 		gbc_lblTime.gridy = 6;
 		contentPane.add(lblTime, gbc_lblTime);
-		
+
 		textField_4 = new JTextField();
 		textField_4.setEditable(false);
 		GridBagConstraints gbc_textField_4 = new GridBagConstraints();
@@ -290,67 +299,73 @@ public class BrkAccelDemo extends JFrame {
 	}
 
 	private double position(double t) {
-		vel = velocity(t/1000);
-		if (!max) {
-			if (vel >= maxvel) {
+		vel = velocity(t / 1000);
+		if (!max) { //If vehicle is not at max speed...
+			if (vel >= maxvel) { //..check if it is
 				textField_3.setText(String.valueOf(maxvel));
 				System.out.println("Max vel reached: " + time);
 				max = true;
 				return lastpos + (maxvel * (double) timer.getDelay() / 1000);
 				
 			}
-		} else {
+			else { //If it isn't, then return as usual
+				double i = (0.5 * (double) accel * (Math.pow(((double) t) / 1000, 2))) + (initvel * t / 1000);
+				System.out.println(i);
+				return i;
+			}
+		} else { //If vehicle IS at max speed...
 			textField_3.setText(String.valueOf(maxvel));
 			System.out.println("Max vel reached: " + time);
 			max = true;
 			return lastpos + (maxvel * (double) timer.getDelay() / 1000);
+			//...then return the previous position + the max velocity * time
 		}
-		double i = (0.5 * (double) accel * (Math.pow(((double) t) / 1000, 2))) + (initvel * t / 1000);
-		System.out.println(i);
-		return i;
+		
 	}
 
 	private double velocity(double t) {
 		return initvel + (accel * t);
+		//Return velocity
 	}
 
-	class MyTimerActionListener implements ActionListener {
+	class MyTimerActionListener implements ActionListener { //Simulation timer
 		public void actionPerformed(ActionEvent e) {
-			time = time + timer.getDelay();
-			double pos = position(time);
-			if (lastpos > pos && chckbxmntmStopSimulationAt.isSelected()) {
-				timer.stop();
+			time = time + timer.getDelay(); //Increment time by the tick rate
+			double pos = position(time); //Get current position of the object
+			if (lastpos > pos && chckbxmntmStopSimulationAt.isSelected()) { //If vehicle is in reverse and the setting says to stop...
+				timer.stop(); //Stop simulation
 				running = false;
 
-				lastpos = 0;
+				lastpos = 0; //Reset last position
 
 				JOptionPane.showMessageDialog(null,
 						"Done!  Time taken: " + ((double) time / 1000 - ((double) timer.getDelay() / 1000)) + "s");
-				time = 0;
-				max=false;
-			} else if (progressBar.getValue() == 1000) {
-				timer.stop();
+				//Show time taken to stop vehicle
+				time = 0; //Reset time
+				max = false; //Reset condition of max speed
+			} else if (progressBar.getValue() == 1000) { //If course is complete...
+				timer.stop(); //Stop simulation
 				running = false;
-				lastpos = 0;
+				lastpos = 0; //Reset last position
 				JOptionPane.showMessageDialog(null,
 						"Done!  Time taken: " + ((double) time / 1000 - ((double) timer.getDelay() / 1000)) + "s");
+				//Show time to complete
 				time = 0;
-				max=false;
+				max = false;
 			}
 			DecimalFormat df = new DecimalFormat("#.###");
 			df.setMinimumFractionDigits(3);
 			df.setMaximumFractionDigits(3);
 			df.setRoundingMode(RoundingMode.HALF_UP);
 			if (!max) {
-			
-				textField_3.setText(String.valueOf(df.format(velocity(time/1000))) + " m/s");
-			}
-			else
-				textField_3.setText(maxvel + " m/s");
-			textField_4.setText(df.format(time/1000)+"s");
-			progressBar.setValue((int) Math.round(pos));
+				//Display velocity if not maxed
+				textField_3.setText(String.valueOf(df.format(velocity(time / 1000))) + " m/s");
+			} else
+				textField_3.setText(maxvel + " m/s"); //Display velocity if maxed
+			textField_4.setText(df.format(time / 1000) + "s"); //Display time
+			progressBar.setValue((int) Math.round(pos)); //Update position display
 			progressBar.setString(String.valueOf(progressBar.getValue()) + "m");
-			lastpos = pos;
+			lastpos = pos; //Update last position value
 		}
 	}
 }
