@@ -1,15 +1,11 @@
 package demo;
 
-import java.awt.BorderLayout;
-
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.ProgressBarUI;
-
 import java.awt.GridBagLayout;
 import javax.swing.JProgressBar;
 import java.awt.GridBagConstraints;
@@ -20,6 +16,9 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import java.awt.event.ActionListener;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import javax.swing.JLabel;
@@ -38,9 +37,8 @@ public class BrkAccelDemo extends JFrame {
 	private Timer timer;
 	private JButton btnReset;
 	private double accel = 0;
-	private int time = 0;
-	private static double initvel = 0;
-	private boolean stopped = false;
+	private double time = 0;
+	private double initvel = 0;
 	private double lastpos = 0;
 	private double maxvel = 100;
 	private JTextField textField_1;
@@ -57,12 +55,15 @@ public class BrkAccelDemo extends JFrame {
 	private JLabel lblCurrentVel;
 	private JTextField textField_3;
 	private double vel;
+	private boolean max = false;
+	private JLabel lblTime;
+	private JTextField textField_4;
+
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
-		if (args.length > 0)
-			initvel = Double.parseDouble(args[0]);
+
 		try {
 			UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
@@ -88,7 +89,7 @@ public class BrkAccelDemo extends JFrame {
 	public BrkAccelDemo() {
 		setTitle("Acceleration Demo");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 230);
+		setBounds(100, 100, 450, 248);
 
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -126,9 +127,9 @@ public class BrkAccelDemo extends JFrame {
 		setContentPane(contentPane);
 		GridBagLayout gbl_contentPane = new GridBagLayout();
 		gbl_contentPane.columnWidths = new int[] { 0, 214, 0 };
-		gbl_contentPane.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0 };
+		gbl_contentPane.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
 		gbl_contentPane.columnWeights = new double[] { 0.0, 1.0, 0.0 };
-		gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		contentPane.setLayout(gbl_contentPane);
 
 		lblInitVelms = new JLabel("Init Vel (m/s)");
@@ -194,7 +195,7 @@ public class BrkAccelDemo extends JFrame {
 				progressBar.setString("0m");
 				time = 0;
 				lastpos = 0;
-				stopped = false;
+				max=false;
 			}
 		});
 
@@ -246,40 +247,71 @@ public class BrkAccelDemo extends JFrame {
 		progressBar.setStringPainted(true);
 		progressBar.setString("0m");
 		progressBar.setMaximum(1000);
-		
+
 		lblCurrentVel = new JLabel("Current Vel");
 		GridBagConstraints gbc_lblCurrentVel = new GridBagConstraints();
 		gbc_lblCurrentVel.anchor = GridBagConstraints.EAST;
-		gbc_lblCurrentVel.insets = new Insets(0, 0, 0, 5);
+		gbc_lblCurrentVel.insets = new Insets(0, 0, 5, 5);
 		gbc_lblCurrentVel.gridx = 0;
 		gbc_lblCurrentVel.gridy = 5;
 		contentPane.add(lblCurrentVel, gbc_lblCurrentVel);
-		
+
 		textField_3 = new JTextField();
 		textField_3.setEditable(false);
 		GridBagConstraints gbc_textField_3 = new GridBagConstraints();
-		gbc_textField_3.insets = new Insets(0, 0, 0, 5);
+		gbc_textField_3.insets = new Insets(0, 0, 5, 5);
 		gbc_textField_3.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField_3.gridx = 1;
 		gbc_textField_3.gridy = 5;
 		contentPane.add(textField_3, gbc_textField_3);
 		textField_3.setColumns(10);
+		
+		lblTime = new JLabel("Time");
+		GridBagConstraints gbc_lblTime = new GridBagConstraints();
+		gbc_lblTime.anchor = GridBagConstraints.EAST;
+		gbc_lblTime.insets = new Insets(0, 0, 0, 5);
+		gbc_lblTime.gridx = 0;
+		gbc_lblTime.gridy = 6;
+		contentPane.add(lblTime, gbc_lblTime);
+		
+		textField_4 = new JTextField();
+		textField_4.setEditable(false);
+		GridBagConstraints gbc_textField_4 = new GridBagConstraints();
+		gbc_textField_4.insets = new Insets(0, 0, 0, 5);
+		gbc_textField_4.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textField_4.gridx = 1;
+		gbc_textField_4.gridy = 6;
+		contentPane.add(textField_4, gbc_textField_4);
+		textField_4.setColumns(10);
 	}
 
 	public JProgressBar getProgressBar() {
 		return progressBar;
 	}
 
-	private double position(int t) {
-		vel=(initvel) + (accel * ((double) t / 1000));
-		if (vel >= maxvel) {
+	private double position(double t) {
+		vel = velocity(t/1000);
+		if (!max) {
+			if (vel >= maxvel) {
+				textField_3.setText(String.valueOf(maxvel));
+				System.out.println("Max vel reached: " + time);
+				max = true;
+				return lastpos + (maxvel * (double) timer.getDelay() / 1000);
+				
+			}
+		} else {
 			textField_3.setText(String.valueOf(maxvel));
 			System.out.println("Max vel reached: " + time);
+			max = true;
 			return lastpos + (maxvel * (double) timer.getDelay() / 1000);
 		}
 		double i = (0.5 * (double) accel * (Math.pow(((double) t) / 1000, 2))) + (initvel * t / 1000);
 		System.out.println(i);
 		return i;
+	}
+
+	private double velocity(double t) {
+		return initvel + (accel * t);
 	}
 
 	class MyTimerActionListener implements ActionListener {
@@ -288,7 +320,6 @@ public class BrkAccelDemo extends JFrame {
 			double pos = position(time);
 			if (lastpos > pos && chckbxmntmStopSimulationAt.isSelected()) {
 				timer.stop();
-				stopped = false;
 				running = false;
 
 				lastpos = 0;
@@ -296,19 +327,30 @@ public class BrkAccelDemo extends JFrame {
 				JOptionPane.showMessageDialog(null,
 						"Done!  Time taken: " + ((double) time / 1000 - ((double) timer.getDelay() / 1000)) + "s");
 				time = 0;
+				max=false;
+			} else if (progressBar.getValue() == 1000) {
+				timer.stop();
+				running = false;
+				lastpos = 0;
+				JOptionPane.showMessageDialog(null,
+						"Done!  Time taken: " + ((double) time / 1000 - ((double) timer.getDelay() / 1000)) + "s");
+				time = 0;
+				max=false;
 			}
+			DecimalFormat df = new DecimalFormat("#.###");
+			df.setMinimumFractionDigits(3);
+			df.setMaximumFractionDigits(3);
+			df.setRoundingMode(RoundingMode.HALF_UP);
+			if (!max) {
+			
+				textField_3.setText(String.valueOf(df.format(velocity(time/1000))) + " m/s");
+			}
+			else
+				textField_3.setText(maxvel + " m/s");
+			textField_4.setText(df.format(time/1000)+"s");
 			progressBar.setValue((int) Math.round(pos));
 			progressBar.setString(String.valueOf(progressBar.getValue()) + "m");
 			lastpos = pos;
-			if (progressBar.getValue() == 1000) {
-				timer.stop();
-				stopped = false;
-				running = false;
-				lastpos = 0;
-				JOptionPane.showMessageDialog(null,
-						"Done!  Time taken: " + ((double) time / 1000 - ((double) timer.getDelay() / 1000)) + "s");
-				time = 0;
-			}
 		}
 	}
 }
