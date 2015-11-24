@@ -1,6 +1,8 @@
 package demo;
 
 import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -27,6 +29,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 
 public class BrkAccelDemo extends JFrame {
 	private int tick = 5; // Milliseconds between each simulation update
@@ -61,6 +65,10 @@ public class BrkAccelDemo extends JFrame {
 	private boolean max = false; // Whether or not the vehicle is at max speed
 	private JLabel lblTime; // Text on the GUI
 	private JTextField textField_4; // Displays current simulation time
+	private JPanel panel;
+	private JSpinner spinner;
+	private JLabel lblSelectedCar;
+	private JButton btnSubmitCarSettings;
 
 	/**
 	 * Launch the application.
@@ -78,6 +86,7 @@ public class BrkAccelDemo extends JFrame {
 			public void run() {
 				try {
 					BrkAccelDemo frame = new BrkAccelDemo();
+					frame.setOpacity(1);
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -92,7 +101,7 @@ public class BrkAccelDemo extends JFrame {
 	public BrkAccelDemo() {
 		setTitle("Acceleration Demo");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 248);
+		setBounds(100, 100, 489, 319);
 
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -134,9 +143,9 @@ public class BrkAccelDemo extends JFrame {
 		setContentPane(contentPane);
 		GridBagLayout gbl_contentPane = new GridBagLayout();
 		gbl_contentPane.columnWidths = new int[] { 0, 214, 0 };
-		gbl_contentPane.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+		gbl_contentPane.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		gbl_contentPane.columnWeights = new double[] { 0.0, 1.0, 0.0 };
-		gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gbl_contentPane.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE };
 		contentPane.setLayout(gbl_contentPane);
 
 		lblInitVelms = new JLabel("Init Vel (m/s)");
@@ -209,10 +218,10 @@ public class BrkAccelDemo extends JFrame {
 		JButton btnStartstop = new JButton("Start/Stop");
 		btnStartstop.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				System.out.println("Button received");
+			
 
 				if (running) {
-					System.out.println("Stopping");
+					
 					timer.stop();
 					running = false;
 					// Stop/pause the simulation without resetting it
@@ -230,7 +239,9 @@ public class BrkAccelDemo extends JFrame {
 					timer.start();
 					// Parse values and begin simulation if it is not running
 				}
+
 			}
+
 		});
 		GridBagConstraints gbc_btnStartstop = new GridBagConstraints();
 		gbc_btnStartstop.anchor = GridBagConstraints.WEST;
@@ -244,6 +255,29 @@ public class BrkAccelDemo extends JFrame {
 		gbc_btnReset.gridx = 2;
 		gbc_btnReset.gridy = 3;
 		contentPane.add(btnReset, gbc_btnReset);
+		
+		lblSelectedCar = new JLabel("Selected Car");
+		GridBagConstraints gbc_lblSelectedCar = new GridBagConstraints();
+		gbc_lblSelectedCar.insets = new Insets(0, 0, 5, 5);
+		gbc_lblSelectedCar.gridx = 0;
+		gbc_lblSelectedCar.gridy = 4;
+		contentPane.add(lblSelectedCar, gbc_lblSelectedCar);
+		
+		spinner = new JSpinner();
+		spinner.setModel(new SpinnerNumberModel(1, 1, 10, 1));
+		GridBagConstraints gbc_spinner = new GridBagConstraints();
+		gbc_spinner.anchor = GridBagConstraints.WEST;
+		gbc_spinner.insets = new Insets(0, 0, 5, 5);
+		gbc_spinner.gridx = 1;
+		gbc_spinner.gridy = 4;
+		contentPane.add(spinner, gbc_spinner);
+		
+		btnSubmitCarSettings = new JButton("Submit Car Settings");
+		GridBagConstraints gbc_btnSubmitCarSettings = new GridBagConstraints();
+		gbc_btnSubmitCarSettings.insets = new Insets(0, 0, 5, 0);
+		gbc_btnSubmitCarSettings.gridx = 2;
+		gbc_btnSubmitCarSettings.gridy = 4;
+		contentPane.add(btnSubmitCarSettings, gbc_btnSubmitCarSettings);
 
 		progressBar = new JProgressBar();
 		GridBagConstraints gbc_progressBar = new GridBagConstraints();
@@ -251,7 +285,7 @@ public class BrkAccelDemo extends JFrame {
 		gbc_progressBar.weightx = 12.0;
 		gbc_progressBar.gridwidth = 3;
 		gbc_progressBar.gridx = 0;
-		gbc_progressBar.gridy = 4;
+		gbc_progressBar.gridy = 5;
 		contentPane.add(progressBar, gbc_progressBar);
 		progressBar.setStringPainted(true);
 		progressBar.setString("0m");
@@ -262,7 +296,7 @@ public class BrkAccelDemo extends JFrame {
 		gbc_lblCurrentVel.anchor = GridBagConstraints.EAST;
 		gbc_lblCurrentVel.insets = new Insets(0, 0, 5, 5);
 		gbc_lblCurrentVel.gridx = 0;
-		gbc_lblCurrentVel.gridy = 5;
+		gbc_lblCurrentVel.gridy = 6;
 		contentPane.add(lblCurrentVel, gbc_lblCurrentVel);
 
 		textField_3 = new JTextField();
@@ -271,27 +305,46 @@ public class BrkAccelDemo extends JFrame {
 		gbc_textField_3.insets = new Insets(0, 0, 5, 5);
 		gbc_textField_3.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField_3.gridx = 1;
-		gbc_textField_3.gridy = 5;
+		gbc_textField_3.gridy = 6;
 		contentPane.add(textField_3, gbc_textField_3);
 		textField_3.setColumns(10);
 
 		lblTime = new JLabel("Time");
 		GridBagConstraints gbc_lblTime = new GridBagConstraints();
 		gbc_lblTime.anchor = GridBagConstraints.EAST;
-		gbc_lblTime.insets = new Insets(0, 0, 0, 5);
+		gbc_lblTime.insets = new Insets(0, 0, 5, 5);
 		gbc_lblTime.gridx = 0;
-		gbc_lblTime.gridy = 6;
+		gbc_lblTime.gridy = 7;
 		contentPane.add(lblTime, gbc_lblTime);
 
 		textField_4 = new JTextField();
 		textField_4.setEditable(false);
 		GridBagConstraints gbc_textField_4 = new GridBagConstraints();
-		gbc_textField_4.insets = new Insets(0, 0, 0, 5);
+		gbc_textField_4.insets = new Insets(0, 0, 5, 5);
 		gbc_textField_4.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField_4.gridx = 1;
-		gbc_textField_4.gridy = 6;
+		gbc_textField_4.gridy = 7;
 		contentPane.add(textField_4, gbc_textField_4);
 		textField_4.setColumns(10);
+
+		panel = new JPanel() {
+			@Override public void paint(Graphics g) {
+				panel.removeAll();
+				Graphics2D g2d = (Graphics2D)g;
+				g2d.drawOval((int) Math.round((lastpos/1000)*((double) panel.getWidth()-13)), 5, 12, 12);
+				g2d.drawLine(0, 0, panel.getWidth(), 0);
+				g2d.drawLine(0, 22, panel.getWidth(), 22);
+			}
+		};
+		contentPane.setOpaque(true);
+		
+		panel.setOpaque(true);
+		GridBagConstraints gbc_panel = new GridBagConstraints();
+		gbc_panel.gridwidth = 3;
+		gbc_panel.fill = GridBagConstraints.BOTH;
+		gbc_panel.gridx = 0;
+		gbc_panel.gridy = 8;
+		contentPane.add(panel, gbc_panel);
 	}
 
 	public JProgressBar getProgressBar() {
@@ -300,72 +353,85 @@ public class BrkAccelDemo extends JFrame {
 
 	private double position(double t) {
 		vel = velocity(t / 1000);
-		if (!max) { //If vehicle is not at max speed...
-			if (vel >= maxvel) { //..check if it is
+		if (!max) { // If vehicle is not at max speed...
+			if (vel >= maxvel) { // ..check if it is
 				textField_3.setText(String.valueOf(maxvel));
-				System.out.println("Max vel reached: " + time);
 				max = true;
 				return lastpos + (maxvel * (double) timer.getDelay() / 1000);
-				
-			}
-			else { //If it isn't, then return as usual
+
+			} else { // If it isn't, then return as usual
 				double i = (0.5 * (double) accel * (Math.pow(((double) t) / 1000, 2))) + (initvel * t / 1000);
-				System.out.println(i);
 				return i;
 			}
-		} else { //If vehicle IS at max speed...
+		} else { // If vehicle IS at max speed...
 			textField_3.setText(String.valueOf(maxvel));
-			System.out.println("Max vel reached: " + time);
 			max = true;
 			return lastpos + (maxvel * (double) timer.getDelay() / 1000);
-			//...then return the previous position + the max velocity * time
+			// ...then return the previous position + the max velocity * time
 		}
-		
+
 	}
 
 	private double velocity(double t) {
 		return initvel + (accel * t);
-		//Return velocity
+		// Return velocity
 	}
 
-	class MyTimerActionListener implements ActionListener { //Simulation timer
+	class MyTimerActionListener implements ActionListener { // Simulation timer
 		public void actionPerformed(ActionEvent e) {
-			time = time + timer.getDelay(); //Increment time by the tick rate
-			double pos = position(time); //Get current position of the object
-			if (lastpos > pos && chckbxmntmStopSimulationAt.isSelected()) { //If vehicle is in reverse and the setting says to stop...
-				timer.stop(); //Stop simulation
+			time = time + timer.getDelay(); // Increment time by the tick rate
+			double pos = position(time); // Get current position of the object
+			if (lastpos > pos && chckbxmntmStopSimulationAt.isSelected()) { // If
+																			// vehicle
+																			// is
+																			// in
+																			// reverse
+																			// and
+																			// the
+																			// setting
+																			// says
+																			// to
+																			// stop...
+				timer.stop(); // Stop simulation
 				running = false;
 
-				lastpos = 0; //Reset last position
+				lastpos = 0; // Reset last position
 
 				JOptionPane.showMessageDialog(null,
 						"Done!  Time taken: " + ((double) time / 1000 - ((double) timer.getDelay() / 1000)) + "s");
-				//Show time taken to stop vehicle
-				time = 0; //Reset time
-				max = false; //Reset condition of max speed
-			} else if (progressBar.getValue() == 1000) { //If course is complete...
-				timer.stop(); //Stop simulation
+				// Show time taken to stop vehicle
+				time = 0; // Reset time
+				max = false; // Reset condition of max speed
+			} else if (progressBar.getValue() == 1000) { // If course is
+															// complete...
+				timer.stop(); // Stop simulation
 				running = false;
-				lastpos = 0; //Reset last position
+				lastpos = 0; // Reset last position
 				JOptionPane.showMessageDialog(null,
 						"Done!  Time taken: " + ((double) time / 1000 - ((double) timer.getDelay() / 1000)) + "s");
-				//Show time to complete
+				// Show time to complete
 				time = 0;
 				max = false;
+				return;
 			}
 			DecimalFormat df = new DecimalFormat("#.###");
 			df.setMinimumFractionDigits(3);
 			df.setMaximumFractionDigits(3);
 			df.setRoundingMode(RoundingMode.HALF_UP);
 			if (!max) {
-				//Display velocity if not maxed
+				// Display velocity if not maxed
 				textField_3.setText(String.valueOf(df.format(velocity(time / 1000))) + " m/s");
 			} else
-				textField_3.setText(maxvel + " m/s"); //Display velocity if maxed
-			textField_4.setText(df.format(time / 1000) + "s"); //Display time
-			progressBar.setValue((int) Math.round(pos)); //Update position display
+				textField_3.setText(maxvel + " m/s"); // Display velocity if
+														// maxed
+			textField_4.setText(df.format(time / 1000) + "s"); // Display time
+			progressBar.setValue((int) Math.round(pos)); // Update position
+															// display
 			progressBar.setString(String.valueOf(progressBar.getValue()) + "m");
-			lastpos = pos; //Update last position value
+			lastpos = pos; // Update last position value
+			panel.repaint();
+			repaint();
+			System.out.println(time+"  "+String.valueOf(lastpos));
 		}
 	}
 }
